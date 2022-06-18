@@ -1,0 +1,85 @@
+@page "/books";
+@namespace zad6_1.Pages
+@inject IBookService BookService;
+
+<h1> Books </h1>
+<input type="text" @bind="searchValue"/>
+<button @onclick="@Search">Search</button>
+<table>
+    <thead>
+        <tr>
+            <th @onclick="@(()=>Sort("Image"))">
+                Cover
+            </th>
+            <th @onclick="@(()=>Sort("Name"))">
+                Title
+            </th>
+            <th @onclick="@(()=>Sort("Cost"))">
+                Cost
+            </th>
+            <th @onclick="@(()=>Sort("PublishDate"))">
+                Publish Date
+            </th>
+            <th @onclick="@(()=>Sort("AuthorName"))">
+                Author
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var book in books)
+        {
+            <tr>
+                <td><img alt="@(book.Name)" src="@(book.Image)"/></td>
+                <td>@book.Name</td>
+                <td>@book.Cost PLN</td>
+                <td>@book.PublishDate.ToShortDateString()</td>
+                <td>@book.AuthorName</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Book> books {get;set;}
+    private string? searchValue {get; set;}
+    private KeyValuePair<string,bool> ColumnSort {get; set; } = new KeyValuePair<string, bool>("",false);
+    protected override void OnInitialized()
+    {
+        books = BookService.GetBooks();
+    }
+
+    private void Sort(string sortColumn)
+    {
+        if(ColumnSort.Key != sortColumn)
+        {
+            ColumnSort = new KeyValuePair<string, bool>(sortColumn,false);
+        }else 
+        {
+            ColumnSort = new KeyValuePair<string, bool>(sortColumn,!ColumnSort.Value);
+        }
+        if(ColumnSort.Value)
+        {
+            SortDesc(sortColumn);
+        }else
+        {
+            SortAsc(sortColumn);
+        }
+    }
+
+    private void SortDesc(string sortColumn)
+    {
+        books = books.OrderByDescending(e => e.GetType().GetProperty(sortColumn).GetValue(e,null)).ToList();
+    }
+
+    private void SortAsc(string sortColumn)
+    {
+        books = books.OrderBy(e => e.GetType().GetProperty(sortColumn).GetValue(e,null)).ToList();
+    }
+
+    private void Search()
+    {
+        if(searchValue!=null)
+        books = BookService.SearchBooks(searchValue);
+    }
+  
+}
